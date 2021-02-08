@@ -2,96 +2,112 @@
 #include <stdlib.h>
 #include <new>
 
-template <typename T>
-struct stack_t {
-    T* array;
-    int size;
-    int max_size;
-
-    stack_t() {
-        array = nullptr;
-        size = 0;
-        max_size = 0;
-    }
-
-    ~stack_t() {
-        while (size > 0) {
-            pop();
-        }
-        free(array);
-    }
-
-    void push(T elem) {
-        if (size == max_size) {
-            max_size += (max_size == 0);
-            max_size *= 2;
-            array = (T*) realloc((void*) array, max_size * sizeof(T));
-        }
-        new (array + size) T(elem);
-        size++;
-    }
-
-    T top() {
-        return array[size - 1];
-    }
-
-    void pop() {
-        array[--size].~T();
-    }
-};
-
-template <typename U>
+template <class Type>
 struct queue_t {
-    stack_t<U> first;
-    stack_t<U> second;
 
-    void push(U elem) {
-        first.push(elem);
+    typedef struct {
+        Type* array;
+        int size;
+        int max_size;
+    }stack_t;
+
+    stack_t first;
+    stack_t second;
+
+    queue_t() {
+
+        first.array = nullptr;
+        second.array = nullptr;
+
+        first.size = 0;
+        second.size = 0;
+
+        first.max_size = 0;
+        second.max_size = 0;
+
+        printf("OK\n");
     }
 
-    U top() {
+    ~queue_t() {
+        while (first.size > 0) {
+            first.array[--first.size].~Type();
+        }
+        while (second.size > 0) {
+            second.array[--second.size].~Type();
+        }
+        free(first.array);
+        free(second.array);
+
+        printf("GOOD BYE\n");
+    }
+
+    void push_stack(stack_t* a, Type elem) {
+        if (a->size == a->max_size) {
+            a->max_size += (a->max_size == 0);
+            a->max_size *= 2;
+            a->array = (Type*) realloc((void*) a->array, a->max_size * sizeof(Type));
+            //Type* new_a = (Type*) malloc(a->max_size * sizeof(Type));
+            //a->array = new_a;
+        }
+        new(a->array + a->size) Type(elem);
+        a->size++;
+    }
+
+    Type top_stack(stack_t* a) {
+        return a->array[a->size - 1];
+    }
+
+    void pop_stack(stack_t* a) {
+        a->array[--a->size].~Type();
+    }
+
+    void push(Type elem) {
+        push_stack(&first, elem);
+    }
+
+    Type top() {
         if (second.size == 0) {
             int len = first.size;
             for (int i = 0; i < len; i++) {
-                U elem = first.top();
-                first.pop();
-                second.push(elem);
+                Type elem = top_stack(&first);
+                pop_stack(&first);
+                push_stack(&second, elem);
             }
         }
-        return second.top();
+        return top_stack(&second);
     }
 
     void pop() {
         if (second.size == 0) {
             int len = first.size;
             for (int i = 0; i < len; i++) {
-                U elem = first.top();
-                first.pop();
-                second.push(elem);
+                Type elem = top_stack(&first);
+                pop_stack(&first);
+                push_stack(&second, elem);
             }
         }
-        second.pop();
+        pop_stack(&second);
     }
 };
 
 int main() {
     {
         queue_t<int> q;
-        q.push(125);
         q.push(42);
-        q.push(98);
-        printf("%d\n", q.top()); //should be 125
-        printf("%d\n", q.top()); //should be 125
-        q.pop();
+        q.push(777);
+        q.push(123456789);
+        printf("%d\n", q.top()); //should be 42
         printf("%d\n", q.top()); //should be 42
         q.pop();
-        printf("%d\n", q.top()); //should be 98
+        printf("%d\n", q.top()); //should be 777
+        q.pop();
+        printf("%d\n", q.top()); //should be 123456789
     }
 
     {
         queue_t<char> q;
-        q.push('T');
-        printf("%c\n", q.top()); //should be T
+        q.push('A');
+        printf("%c\n", q.top()); //should be A
         q.pop();
         q.push('L');
         q.push('O');
@@ -119,5 +135,6 @@ int main() {
         printf("%s\n", q.top()); //should be "doing?"
         q.pop();
     }
+
     return 0;
 }
