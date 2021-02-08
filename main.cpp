@@ -5,11 +5,11 @@
 template <class Type>
 struct queue_t {
 
-    typedef struct {
+    struct stack_t{
         Type* array;
         int size;
         int max_size;
-    }stack_t;
+    };
 
     stack_t first;
     stack_t second;
@@ -45,9 +45,12 @@ struct queue_t {
         if (a->size == a->max_size) {
             a->max_size += (a->max_size == 0);
             a->max_size *= 2;
-            a->array = (Type*) realloc((void*) a->array, a->max_size * sizeof(Type));
-            //Type* new_a = (Type*) malloc(a->max_size * sizeof(Type));
-            //a->array = new_a;
+            Type* part = (Type*) malloc(a->max_size * sizeof(Type));
+            for (int i = 0; i < a->size; i++) {
+                new (part + i) Type(std::move(a->array[i]));
+                a->array[i].~Type();
+            }
+            a->array = part;
         }
         new(a->array + a->size) Type(elem);
         a->size++;
@@ -138,3 +141,4 @@ int main() {
 
     return 0;
 }
+
